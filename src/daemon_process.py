@@ -37,13 +37,14 @@ def fetch_hacker_news_job(hacker_news_client):
     hacker_news_client.export_latest_hack_news()
     LOG.info("[Hacker News定时任务执行完毕]")
 
-def hacker_news_daily_job(hacker_news_client):
+def hacker_news_daily_job(hacker_news_client, notifier):
     # 这里可以添加处理Hacker News的每日任务逻辑
     LOG.info("[开始执行Hacker News每日任务]")
     # 示例：获取最新的Hacker News文章并处理
     llm = LLM() 
     report_generater = ReportGenerator(llm)
-    report_generater.export_hacker_news_daily_progress()
+    hacker_news_report, report_file_path = report_generater.export_hacker_news_daily_progress()
+    notifier.notify_hacker_news_latest(hacker_news_report)
     LOG.info("[Hacker News每日任务执行完毕]")
 
 def main():
@@ -70,8 +71,8 @@ def main():
     schedule.every(6).hours.do(fetch_hacker_news_job, hacker_news_client)
 
     schedule.every(1).days.at(
-        "17:00"
-    ).do(hacker_news_daily_job, hacker_news_client)
+        "20:05"
+    ).do(hacker_news_daily_job, hacker_news_client, notifier)
 
     try:
         # 在守护进程中持续运行

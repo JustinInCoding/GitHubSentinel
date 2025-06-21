@@ -68,7 +68,7 @@ class ReportGenerator:
         with open(report_file_path, 'w+') as report_file:
             report_file.write(report)
 
-        return report_file_path
+        return report, report_file_path
 
 if __name__ == "__main__":
     llm = LLM() 
