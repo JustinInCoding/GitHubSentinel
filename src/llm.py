@@ -3,6 +3,7 @@ import requests
 from logger import LOG  # 导入日志模块
 
 class LLM:
+
     def __init__(self, config):
         """
         初始化 LLM 类，根据配置选择使用的模型（OpenAI 或 Ollama）。
@@ -13,15 +14,20 @@ class LLM:
         self.model = config.llm_model_type.lower()  # 获取模型类型并转换为小写
         if self.model == "openai":
             from openai import OpenAI  # 导入OpenAI库用于访问GPT模型
-            self.client = OpenAI()  # 创建OpenAI客户端实例
+            self.client = OpenAI(
+                api_key=os.getenv("DEEPSEEK_API_KEY"),  # 从环境变量中获取OpenAI API密钥
+                base_url="https://api.deepseek.com/v1"  # OpenAI API的基础URL 
+            )  # 创建OpenAI客户端实例
         elif self.model == "ollama":
             self.api_url = config.ollama_api_url  # 设置Ollama API的URL
         else:
             raise ValueError(f"Unsupported model type: {self.model}")  # 如果模型类型不支持，抛出错误
         
-        # 从TXT文件加载系统提示信息
+        # 从TXT文件加载系统提示信息ork/chapter05
         with open("prompts/report_prompt.txt", "r", encoding='utf-8') as file:
             self.system_prompt = file.read()
+        with open("prompts/hacker_news_prompt.txt", "r", encoding='utf-8') as file:
+            self.hacker_news_prompt = file.read()
 
     def generate_daily_report(self, markdown_content, dry_run=False):
         """
@@ -69,6 +75,40 @@ class LLM:
             LOG.debug("GPT response: {}", response)
             return response.choices[0].message.content  # 返回生成的报告内容
         except Exception as e:
+            LOG.error(f"生成报告时发生错误：{e}")
+            raise
+
+    def generate_hacker_news_daily_report(self, markdown_content, dry_run=False):
+        # 使用从TXT文件加载的提示信息
+        messages = [
+            {"role": "system", "content": self.hacker_news_prompt},
+            {"role": "user", "content": markdown_content},
+        ]
+
+        if dry_run:
+            # 如果启用了dry_run模式，将不会调用模型，而是将提示信息保存到文件中
+            LOG.info("Dry run mode enabled. Saving prompt to file.")
+            with open("hacker_news/prompt.txt", "w+") as f:
+                # 格式化JSON字符串的保存
+                json.dump(messages, f, indent=4, ensure_ascii=False)
+            LOG.debug("Prompt已保存到 hacker_news/prompt.txt")
+
+            return "DRY RUN"
+
+        # 日志记录开始生成报告
+        LOG.info("使用 GPT 模型开始生成报告。")
+        
+        try:
+            # 调用OpenAI GPT模型生成报告
+            response = self.client.chat.completions.create(
+                model="deepseek-chat",  # 指定使用的模型版本
+                messages=messages
+            )
+            LOG.debug("GPT response: {}", response)
+            # 返回模型生成的内容
+            return response.choices[0].message.content
+        except Exception as e:
+            # 如果在请求过程中出现异常，记录错误并抛出
             LOG.error(f"生成报告时发生错误：{e}")
             raise
 
@@ -121,3 +161,4 @@ if __name__ == '__main__':
 
     report = llm.generate_daily_report(markdown_content, dry_run=False)
     print(report)
+
