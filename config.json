@@ -4,7 +4,7 @@
         "smtp_server": "smtp.qq.com",
         "smtp_port": 465,
         "from": "justin.wangshengjun@foxmail.com",
-        "password": "orfjryfwzmlcicih",
+        "password": "",
         "to": "justindesign007@icloud.com"
     },
     "slack_webhook_url": "your_slack_webhook_url",
@@ -13,8 +13,8 @@
     "github_progress_execution_time":"08:00",
     "llm": {
         "model_type": "ollama",
-        "openai_model_name": "gpt-4o-mini",
-        "ollama_model_name": "llama3",
-        "ollama_api_url": "http://localhost:11434/api/chat"
+        "openai_model_name": "deepseek-chat",
+        "ollama_model_name": "deepseek-r1:1.5b",
+        "ollama_api_url": "http://182.160.27.92:3000/api/chat/completions"
     }
 }
